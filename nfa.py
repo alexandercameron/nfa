@@ -8,9 +8,15 @@ class NFA:
         self.E = NFAlist['E']
         self.currentState = NFAlist['q0']
 
+    def convertToDFA(self):
+        states = self.Q.__len__()
+        print self.Q[self.currentState].transitions
+
+
 class State:
     def __init__(self, state, transitions, accepts):
-        self.state = int(state)
+        self.state = []
+        self.state.append(int(state))
         self.accepts = False
         for x in accepts:
             if int(x) is int(state):
@@ -18,7 +24,10 @@ class State:
         self.transitions = {}
         for x in transitions:
             if int(x[0]) is int(state):
-                self.transitions[x[1]] = x[2]
+                self.transitions[x[1]] = []
+        for x in transitions:
+            if int(x[0]) is int(state):
+                self.transitions[x[1]].append(x[2])
 
 def readfile(filename):
     with open(filename,'r') as x:
@@ -57,17 +66,8 @@ def readfile(filename):
 
 def main(filename):
     nfa = NFA(readfile(filename))
-    for x in nfa.Q:
-        print nfa.Q[x].transitions
-
-
-
-
-
-
-
-
-
+    print nfa.Q[2].transitions
+    nfa.convertToDFA()
 
 if __name__ == "__main__":
     main(sys.argv[1])
