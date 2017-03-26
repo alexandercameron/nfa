@@ -1,33 +1,52 @@
 import sys
 
 class NFA:
+
     def __init__(self, NFAlist):
         self.Q = {}
         for x in range(1,NFAlist['Q'] + 1):
-            self.Q[x] = State(x, NFAlist['T'], NFAlist['F'])
+            list = []
+            list.append(x)
+            self.Q[x] = State(list, NFAlist['T'], NFAlist['F'])
         self.E = NFAlist['E']
         self.currentState = NFAlist['q0']
 
     def convertToDFA(self):
         states = self.Q.__len__()
-        print self.Q[self.currentState].transitions
+        a = self.Q[self.currentState].transitions['e']
+
+        epsilonT = {} #will be keyed with letter
+        for x in self.E: #x is each letter
+            for y in a: #for each state you can reach with an epsilon
+                epsilonT[x] = []
+            for y in a:
+                epsilonT[x] = self.Q[int(y)].transitions[x] + epsilonT[x]
+        nextstates = {}
+        for x in self.E:
+            nextstates[x] = self.Q[self.currentState].transitions[x] + epsilonT[x]
+        print nextstates
+
 
 
 class State:
     def __init__(self, state, transitions, accepts):
         self.state = []
-        self.state.append(int(state))
+        for x in state:
+            self.state.append(int(x))
         self.accepts = False
         for x in accepts:
-            if int(x) is int(state):
-                self.accepts = True
+            for y in self.state:
+                if int(x) is int(y):
+                    self.accepts = True
         self.transitions = {}
         for x in transitions:
-            if int(x[0]) is int(state):
-                self.transitions[x[1]] = []
+            for y in self.state:
+                if int(x[0]) is int(y):
+                    self.transitions[x[1]] = []
         for x in transitions:
-            if int(x[0]) is int(state):
-                self.transitions[x[1]].append(x[2])
+            for y in self.state:
+                if int(x[0]) is int(y):
+                    self.transitions[x[1]].append(x[2])
 
 def readfile(filename):
     with open(filename,'r') as x:
@@ -66,7 +85,6 @@ def readfile(filename):
 
 def main(filename):
     nfa = NFA(readfile(filename))
-    print nfa.Q[2].transitions
     nfa.convertToDFA()
 
 if __name__ == "__main__":
