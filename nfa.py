@@ -9,22 +9,130 @@ class NFA:
             list.append(x)
             self.Q[x] = State(list, NFAlist['T'], NFAlist['F'])
         self.E = NFAlist['E']
-        self.currentState = NFAlist['q0']
+        self.currentState = []
+        self.currentState.append(NFAlist['q0'])
+        self.F = NFAlist['F']
 
     def convertToDFA(self):
-        states = self.Q.__len__()
-        a = self.Q[self.currentState].transitions['e']
 
-        epsilonT = {} #will be keyed with letter
-        for x in self.E: #x is each letter
-            for y in a: #for each state you can reach with an epsilon
+
+
+        count = 1
+        currstate = DFAState(self.currentState, count, self.F)
+        count = count + 1
+
+        generatedstates = []
+
+        generatedstates.append(currstate)
+
+        condition = True
+        while condition is True:
+
+            e = True
+
+
+            epsilonT = {}  # will be keyed with letter
+            for x in self.E:  # x is each letter
                 epsilonT[x] = []
-            for y in a:
-                epsilonT[x] = self.Q[int(y)].transitions[x] + epsilonT[x]
-        nextstates = {}
-        for x in self.E:
-            nextstates[x] = self.Q[self.currentState].transitions[x] + epsilonT[x]
-        print nextstates
+
+            #looks for states we can epsilon transition to from current states, saves in a
+            s = currstate.states
+            hold = []
+            while e is True:
+                for x in s:
+                    statesfromepsilon = self.Q[int(x)].transitions['e']
+                e = False
+                for y in statesfromepsilon:
+                    for x in self.Q[int(y)].transitions:
+                        if x is 'e':
+                            e = True
+                            hold.append(statesfromepsilon)
+
+                s = statesfromepsilon
+
+            for x in hold:
+                statesfromepsilon = statesfromepsilon + x
+
+
+            for y in statesfromepsilon:
+                for x in self.Q[int(y)].transitions:
+                    if x is 'e':
+                        pass
+                    else:
+                        epsilonT[x] = self.Q[int(y)].transitions[x]
+
+
+
+
+
+            nextstates = {}
+            for x in self.E:
+                for y in currstate.states:
+                    nextstates[x] = []
+                    try:
+                        nextstates[x] = self.Q[int(y)].transitions[x] + epsilonT[x]
+                    except:
+                        nextstates[x] = epsilonT[x]
+
+            print nextstates['0'],nextstates['1'],nextstates['.'], nextstates['+']
+            #for each symbol in the alphabet
+            id = count
+            duplicate = 0
+            for symbol in self.E:
+                #we check against all states we already have
+                for state in generatedstates:
+                    #if the length of that list  of states is the same
+                    if len(state.states) is len(nextstates[symbol]):
+                        #we check each symbol has a counterpart in the previous state
+                        counterpart = False
+                        for x in nextstates[symbol]:
+                            print"x",x
+
+                            for y in state.states:
+                                print y
+                                if int(x) is int(y):
+                                    counterpart = True
+                            if counterpart is False:
+                                print "break"
+                                break
+                        if counterpart is True:
+                            duplicate = duplicate + 1
+                            id = state.stateid
+                            print "Dup"
+                            break
+                    else:
+                        print state.states
+                        pass
+
+
+                tmp = DFAState(nextstates[symbol], id, self.F)
+                print tmp.stateid
+                print symbol, tmp.states
+                count = count + 1
+
+            if duplicate is len(self.E):
+                condition = False
+
+
+
+
+
+
+class DFAState:
+    def __init__(self, states, x, accepts):
+        self.states = states
+        self.stateid = x
+        #the transitions will have transitions to stateid keyed by alphabet
+        self.transitions = {}
+        self.accepts = False
+        for x in states:
+            for y in accepts:
+                if int(x) is int(y):
+                    self.accepts = True
+
+
+    def settransition(self, symbol, nextstate):
+        self.transitions[symbol] = nextstate
 
 
 
@@ -86,6 +194,7 @@ def readfile(filename):
 def main(filename):
     nfa = NFA(readfile(filename))
     nfa.convertToDFA()
+
 
 if __name__ == "__main__":
     main(sys.argv[1])
