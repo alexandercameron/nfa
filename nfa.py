@@ -16,7 +16,6 @@ class NFA:
     def convertToDFA(self):
 
 
-
         count = 1
         currstate = DFAState(self.currentState, count, self.F)
         count = count + 1
@@ -33,9 +32,9 @@ class NFA:
 
             epsilonT = {}  # will be keyed with letter
             for x in self.E:  # x is each letter
-                epsilonT[x] = []
+                epsilonT[x] = [] #makes each hold a list
 
-            #looks for states we can epsilon transition to from current states, saves in a
+            #looks for states we can epsilon transition to from current states, saves in sfe
             s = currstate.states
             hold = []
             while e is True:
@@ -59,7 +58,7 @@ class NFA:
                     if x is 'e':
                         pass
                     else:
-                        epsilonT[x] = self.Q[int(y)].transitions[x]
+                        epsilonT[x] = self.Q[int(y)].transitions[x] + epsilonT[x]
 
 
 
@@ -74,44 +73,48 @@ class NFA:
                     except:
                         nextstates[x] = epsilonT[x]
 
-            print nextstates['0'],nextstates['1'],nextstates['.'], nextstates['+']
+
             #for each symbol in the alphabet
-            id = count
             duplicate = 0
             for symbol in self.E:
-                #we check against all states we already have
-                for state in generatedstates:
-                    #if the length of that list  of states is the same
-                    if len(state.states) is len(nextstates[symbol]):
-                        #we check each symbol has a counterpart in the previous state
-                        counterpart = False
-                        for x in nextstates[symbol]:
-                            print"x",x
+                id = count
+                #check if the new state is going to be a duplicate
 
+                #start by checking length of new state with prev states
+                duplicate = 0
+                for state in generatedstates:
+                    if len(state.states) is len(nextstates[symbol]):
+                        #check if each element in x has counterpart in y
+                        counterpart = 0
+                        for x in nextstates[symbol]:
                             for y in state.states:
-                                print y
                                 if int(x) is int(y):
-                                    counterpart = True
-                            if counterpart is False:
-                                print "break"
-                                break
-                        if counterpart is True:
-                            duplicate = duplicate + 1
+                                    counterpart = counterpart + 1
+                        if counterpart is len(state.states):
+                            duplicate = 1
                             id = state.stateid
-                            print "Dup"
-                            break
+
                     else:
-                        print state.states
                         pass
 
 
-                tmp = DFAState(nextstates[symbol], id, self.F)
-                print tmp.stateid
-                print symbol, tmp.states
-                count = count + 1
 
-            if duplicate is len(self.E):
+
+
+
+                tmp = DFAState(nextstates[symbol], id, self.F)
+                currstate.settransition(symbol, id)
+                if duplicate is 0:
+                    count = count + 1
+                    generatedstates.append(tmp)
+
+            for z in generatedstates:
+                print z.stateid
+                print z.states
+
+            if duplicate is 0:
                 condition = False
+
 
 
 
