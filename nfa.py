@@ -13,10 +13,8 @@ class NFA:
         self.currentState.append(NFAlist['q0'])
         self.F = NFAlist['F']
 
-
 def convertToDFA(currentstate, accepts, count, generatedstates, nfa):
-
-    newgstates = []
+    count = count + 1
     condition = True
     while condition is True:
 
@@ -30,28 +28,35 @@ def convertToDFA(currentstate, accepts, count, generatedstates, nfa):
         #looks for states we can epsilon transition to from current states, saves in sfe
         s = currentstate.states
         hold = []
+        statesfromepsilon = None
         while e is True:
-            for x in s:
-                statesfromepsilon = nfa.Q[int(x)].transitions['e']
-            e = False
-            for y in statesfromepsilon:
-                for x in nfa.Q[int(y)].transitions:
-                    if x is 'e':
-                        e = True
-                        hold.append(statesfromepsilon)
+            try:
+                for x in s:
+                    statesfromepsilon = nfa.Q[int(x)].transitions['e']
+            except:
+                pass
+                statesfromepsilon = None
 
-            s = statesfromepsilon
+            e = False
+            if statesfromepsilon is not None:
+                for y in statesfromepsilon:
+                    for x in nfa.Q[int(y)].transitions:
+                        if x is 'e':
+                            e = True
+                            hold.append(statesfromepsilon)
+
+                s = statesfromepsilon
 
         for x in hold:
             statesfromepsilon = statesfromepsilon + x
 
-
-        for y in statesfromepsilon:
-            for x in nfa.Q[int(y)].transitions:
-                if x is 'e':
-                    pass
-                else:
-                    epsilonT[x] = nfa.Q[int(y)].transitions[x] + epsilonT[x]
+        if statesfromepsilon is not None:
+            for y in statesfromepsilon:
+                for x in nfa.Q[int(y)].transitions:
+                    if x is 'e':
+                        pass
+                    else:
+                        epsilonT[x] = nfa.Q[int(y)].transitions[x] + epsilonT[x]
 
         nextstates = {}
         for x in nfa.E:
@@ -71,35 +76,39 @@ def convertToDFA(currentstate, accepts, count, generatedstates, nfa):
             #start by checking length of new state with prev states
             duplicate = 0
             for state in generatedstates:
-                if len(state.states) is len(nextstates[symbol]):
-                    #check if each element in x has counterpart in y
-                    counterpart = 0
-                    for x in nextstates[symbol]:
-                        for y in state.states:
-                            if int(x) is int(y):
-                                counterpart = counterpart + 1
-                    if counterpart is len(state.states):
-                        duplicate = 1
-                        id = state.stateid
+                try:
+                    if len(state.states) is len(nextstates[symbol]):
+                        #check if each element in x has counterpart in y
+                        counterpart = 0
+                        for x in nextstates[symbol]:
+                            for y in state.states:
+                                if int(x) is int(y):
+                                    counterpart = counterpart + 1
+                        if counterpart is len(state.states):
+                            duplicate = 1
+                            id = state.stateid
 
-                else:
+                    else:
+                        pass
+                except:
                     pass
-
             currentstate.settransition(symbol, id)
+
             if duplicate is 0:
                 tmp = DFAState(nextstates[symbol], id, nfa.F)
                 count = count + 1
                 generatedstates.append(tmp)
 
 
-        for z in generatedstates:
-            print z.stateid
-            print z.states
+
+        #for z in generatedstates:
+            #print z.stateid
+            #print z.states
+
 
         condition = False
 
-    return newgstates
-
+    return generatedstates
 
 class DFAState:
     def __init__(self, states, x, accepts):
@@ -181,7 +190,16 @@ def main(filename):
     currentstate = DFAState(nfa.currentState, 1, nfa.F)
     generatedstates.append(currentstate)
 
-    states = convertToDFA(currentstate, nfa.F, 1, generatedstates ,nfa.E)
+    states = convertToDFA(currentstate, nfa.F, 1, generatedstates, nfa)
+
+    #Here, I could run a check that all states in generatedstates have transition
+    for x in states:
+        for y in nfa.E:
+            try:
+                print x.stateid, x.states, y, x.transitions[y]
+            except:
+                print "No transition yet"
+                pass
 
 
 if __name__ == "__main__":
