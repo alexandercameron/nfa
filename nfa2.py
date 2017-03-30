@@ -20,9 +20,9 @@ class DFAState:
         # the transitions will have transitions to stateid keyed by alphabet
         self.transitions = {}
         self.accepts = False
-        for x in states:
+        for z in states:
             for y in accepts:
-                if int(x) is int(y):
+                if int(z) is int(y):
                     self.accepts = True
 
     def settransition(self, symbol, nextstate):
@@ -100,17 +100,28 @@ def findtransitions(stateid, stateslist, nfa ):
     s= curr.states
 
     hold = []
-    statesfromepsilon = None
+    statesfromepsilon = []
     while e is True:
-        try:
-            for x in s:
-                statesfromepsilon = nfa.Q[int(x)].transitions['e']
-        except:
-            pass
-            statesfromepsilon = None
+        for x in s:
+            try:
+                for z in nfa.Q[int(x)].transitions['e']:
+                    statesfromepsilon.append(z)
+            except:
+                pass
 
         e = False
-        if statesfromepsilon is not None:
+
+        print statesfromepsilon
+
+        if len(statesfromepsilon) is not 0:
+            for y in statesfromepsilon:
+                for x in nfa.Q[int(y)].transitions:
+                    if x is 'e':
+                        e  = True
+                        hold.append(y)
+            s = statesfromepsilon
+        '''
+        if len(statesfromepsilon) is not 0:
             for y in statesfromepsilon:
                 for x in nfa.Q[int(y)].transitions:
                     if x is 'e':
@@ -118,9 +129,12 @@ def findtransitions(stateid, stateslist, nfa ):
                         hold.append(statesfromepsilon)
 
             s = statesfromepsilon
+            '''
 
     for x in hold:
+        print "hold", x
         statesfromepsilon = statesfromepsilon + x
+
 
     if statesfromepsilon is not None:
         for y in statesfromepsilon:
@@ -128,16 +142,25 @@ def findtransitions(stateid, stateslist, nfa ):
                 if x is 'e':
                     pass
                 else:
-                    epsilonT[x] = nfa.Q[int(y)].transitions[x] + epsilonT[x]
+                    for l in nfa.Q[int(y)].transitions[x]:
+                        epsilonT[x].append(l)
 
     nextstates = {}
     for x in nfa.E:
         for y in curr.states:
             nextstates[x] = []
+            for k in epsilonT[x]:
+                nextstates[x].append(k)
             try:
-                nextstates[x] = nfa.Q[int(y)].transitions[x] + epsilonT[x]
+                for a in nfa.Q[int(y)].transitions[x]:
+                    print y, x, a
+                    nextstates[x].append(int(a))
             except:
-                nextstates[x] = epsilonT[x]
+                nextstates[x].append(0)
+
+    for y in nfa.E:
+        if len(nextstates[y]) is 0:
+            nextstates[y].append(0)
 
 
     list = []
@@ -190,23 +213,28 @@ def main(filename):
     generatedstates[1] = currentstate
 
     states = findtransitions(1, generatedstates, nfa)
-    for y in nfa.E:
-        print 1, y, states[1].transitions[y]
     # Here, I could run a check that all states in generatedstates have transition
+
+
+    notransition = checkalltransitions(states, nfa)
+    while notransition is not -1:
+        states = findtransitions(notransition, states, nfa)
+        notransition = checkalltransitions(states, nfa)
+
     for x in states:
         for y in nfa.E:
-            try:
-                print x, y ,states[x].transitions[y]
-            except:
-                try:
-                    print  "No transition yet"
-                    print "Calling..."
-                    states = findtransitions(x, states, nfa)
-                    for x in states:
-                        print x, y, states[x].transitions[y]
-                except:
-                    print "Dammit."
+            print states[x].states, x, y, states[states[x].transitions[y]].states
 
+
+def checkalltransitions(statelist, nfa):
+    for x in statelist:
+        for y in nfa.E:
+            try:
+                statelist[x].transitions[y]
+            except:
+                return x
+
+    return -1
 
 if __name__ == "__main__":
     main(sys.argv[1])
