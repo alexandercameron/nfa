@@ -88,120 +88,88 @@ def readfile(filename):
 
 
 
-def findtransitions(stateid, stateslist, nfa ):
+def settransition(id, states, nfa):
 
-    sl = stateslist
-    curr = stateslist[stateid]
-    e = True
-    epsilonT = {}
-    for x in nfa.E:
-        epsilonT[x] = []
+    curr = states[id] #curr is the DFA state we are setting transitions for
 
-    s= curr.states
-
+    #find the NFA states we can epsilon transition to, for each state in curr
+    epsilons = []
     hold = []
-    statesfromepsilon = []
-    while e is True:
-        for x in s:
+    for x in curr.states:
+        try:
+            for z in nfa.Q[x].transitions['e']:
+                epsilons.append(int(z))
+                hold.append(int(z))
+        except:
+            pass
+
+    print epsilons
+    # check if there are more epsilons
+    therearemoreepsilons = True
+
+    newe = []
+    while therearemoreepsilons is True:
+        counter = 0
+        for y in epsilons:
+
             try:
-                for z in nfa.Q[int(x)].transitions['e']:
-                    statesfromepsilon.append(z)
+                for z in nfa.Q[int(y)].transitions['e']:
+                    hold.append(int(z))
+                    newe.append(int(z))
+
             except:
                 pass
+                counter = counter + 1
 
-        e = False
+        if counter is len(epsilons):
+            therearemoreepsilons = False
 
-        print statesfromepsilon
+        epsilons = newe
 
-        if len(statesfromepsilon) is not 0:
-            for y in statesfromepsilon:
-                for x in nfa.Q[int(y)].transitions:
-                    if x is 'e':
-                        e  = True
-                        hold.append(y)
-            s = statesfromepsilon
-        '''
-        if len(statesfromepsilon) is not 0:
-            for y in statesfromepsilon:
-                for x in nfa.Q[int(y)].transitions:
-                    if x is 'e':
-                        e = True
-                        hold.append(statesfromepsilon)
+    for y in curr.states:
+        hold.append(int(y))
 
-            s = statesfromepsilon
-            '''
+    print hold
 
-    for x in hold:
-        print "hold", x
-        statesfromepsilon = statesfromepsilon + x
+    #WE CHECK THE TRANSITIONS FOR ALL SYMBOLS
+    trans = {}
+    for symbol in nfa.E:
+        trans[symbol] = []
 
-
-    if statesfromepsilon is not None:
-        for y in statesfromepsilon:
-            for x in nfa.Q[int(y)].transitions:
-                if x is 'e':
-                    pass
-                else:
-                    for l in nfa.Q[int(y)].transitions[x]:
-                        epsilonT[x].append(l)
-
-    nextstates = {}
-    for x in nfa.E:
-        for y in curr.states:
-            nextstates[x] = []
-            for k in epsilonT[x]:
-                nextstates[x].append(k)
+    for symbol in nfa.E:
+        for state in hold:
             try:
-                for a in nfa.Q[int(y)].transitions[x]:
-                    print y, x, a
-                    nextstates[x].append(int(a))
+                for z in nfa.Q[int(state)].transitions[symbol]:
+                    trans[symbol].append(z)
             except:
-                nextstates[x].append(0)
+                pass
+    for symbol in nfa.E:
+        if len(trans[symbol]) is 0:
+            trans[symbol].append(int(0))
 
-    for y in nfa.E:
-        if len(nextstates[y]) is 0:
-            nextstates[y].append(0)
 
-
-    list = []
-    for x in range(1, sl.__len__() + 1):
-        list.append(sl[x])
-
+    #make some DFA state objects
     newstates = {}
 
     for symbol in nfa.E:
-        # check if the new state is going to be a duplicate
-        id = len(list) + 1
-        # start by checking length of new state with prev states
-        duplicate = 0
-        for z in list:
-            try:
-                if len(z.states) is len(nextstates[symbol]):
-                    # check if each element in x has counterpart in y
-                    counterpart = 0
-                    for x in nextstates[symbol]:
-                        for y in z.states:
-                            if int(x) is int(y):
-                                counterpart = counterpart + 1
-                    if counterpart is len(z.states):
-                        duplicate = 1
-                        id = z.stateid
+        for x in trans[symbol]:
+            counterpart = 0
+            for y in states:
+                for z in states[y].states:
+                    if int(x) is int(z):
+                        counterpart = counterpart + 1
+            if len(trans[symbol]) is counterpart:
+                id = y.stateid
+            else:
+                id = len(states) + 1
 
-                else:
-                    pass
-            except:
-                pass
-
-        curr.settransition(symbol, id)
-        if duplicate is 0:
-            tmp = DFAState(nextstates[symbol], id, nfa.F)
-            list.append(tmp)
+            tmp = DFAState(trans[symbol], id, nfa.F)
             newstates[id] = tmp
-            id = id + 1
 
-    for a in stateslist:
-        newstates[a] = stateslist[a]
-    newstates[stateid] = curr
+            curr.settransition(symbol, id)
+
+    for x in newstates:
+        print x, newstates[x].states
     return newstates
 
 
@@ -212,18 +180,11 @@ def main(filename):
     currentstate = DFAState(nfa.currentState, 1, nfa.F)
     generatedstates[1] = currentstate
 
-    states = findtransitions(1, generatedstates, nfa)
+    states = settransition(1, generatedstates, nfa)
     # Here, I could run a check that all states in generatedstates have transition
 
 
     notransition = checkalltransitions(states, nfa)
-    while notransition is not -1:
-        states = findtransitions(notransition, states, nfa)
-        notransition = checkalltransitions(states, nfa)
-
-    for x in states:
-        for y in nfa.E:
-            print states[x].states, x, y, states[states[x].transitions[y]].states
 
 
 def checkalltransitions(statelist, nfa):
