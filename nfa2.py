@@ -97,9 +97,10 @@ def settransition(id, states, nfa):
     epsilons = []
     hold = []
 
+
     for x in curr.states:
         try:
-            for z in nfa.Q[x].transitions['e']:
+            for z in nfa.Q[int(x)].transitions['e']:
                 epsilons.append(int(z))
                 hold.append(int(z))
         except:
@@ -152,31 +153,41 @@ def settransition(id, states, nfa):
 
     newstates[curr.stateid] = curr
     newid = 0
+    '''
+    this is where we check for duplicates
+    
+    trans is a dictionary that holds a list of states keyed to a symbol
+    for each symbol, we need to check if the list in trans keyed to that symbol is the same as a saved state
+    to do this:
+        look at each saved state, s
+        check if element in trans is equal to element in s
+            if it is, add to counterpart
+        if counterpart is the length of the state list (ie, it is a dup)
+            set transition to the id of s
+        else   
+            make a new state with id of len(newstates + 1)
+    '''
+
     for symbol in nfa.E:
-        flag = 0
-        counterpart = 0
         dup = 0
-        for x in trans[symbol]:
-            for y in newstates:
-                for z in newstates[y].states:
-                    if int(x) is int(z):
-                        counterpart = counterpart + 1
+        for s in newstates:
+            counterpart = 0
+            #we have to check if trans[symbol] == newstates[s].states
+            if len(trans[symbol]) is len(newstates[s].states):
+                for onestate in trans[symbol]:
+                    for correspondingstate in newstates[s].states:
+                        if int(onestate) is int(correspondingstate):
+                            counterpart = counterpart + 1
 
-                if len(trans[symbol]) is counterpart:
-                    dup = y
-            #check if that is a transition
-            if dup is not 0:
-                flag = 1
-                newid = dup
-            else:
-                newid = len(newstates) + 1
-
-        if flag is 0:
+                if counterpart is len(trans[symbol]):
+                    newid = s
+                    dup = 1
+        if dup is 0:
+            newid = len(newstates) + 1
             tmp = DFAState(trans[symbol], newid, nfa.F)
             newstates[newid] = tmp
 
         curr.settransition(symbol, newid)
-
 
     return newstates
 
@@ -190,7 +201,7 @@ def checkalltransitions(statelist, nfa):
 
     return -1
 
-def main(filename):
+def main(filename, outname):
     nfa = NFA(readfile(filename))
 
     generatedstates = {}
@@ -204,11 +215,31 @@ def main(filename):
 
     notransition = checkalltransitions(states, nfa)
     while notransition is not -1:
-        states = settransition(notransition, generatedstates, nfa)
+        states = settransition(notransition, states, nfa)
         notransition = checkalltransitions(states, nfa)
 
+    f = open(outname, "a")
+    f.write(str(len(states)))
+    f.write("\n")
+    for x in nfa.E:
+        f.write(x)
+    f.write("\n")
     for x in states:
-        print states[x].__dict__
+        for symbol in nfa.E:
+            f.write(str(x))
+            f.write(" '")
+            f.write(symbol)
+            f.write("' ")
+            f.write(str(states[x].transitions[symbol]))
+            f.write("\n")
+    f.write('1')
+    f.write("\n")
+    for x in states:
+        if states[x].accepts is True:
+            f.write(str(x))
+            f.write(" ")
+    f.write("\n")
+    f.close()
 
 if __name__ == "__main__":
-    main(sys.argv[1])
+    main(sys.argv[1], sys.argv[2])
