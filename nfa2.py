@@ -91,10 +91,12 @@ def readfile(filename):
 def settransition(id, states, nfa):
 
     curr = states[id] #curr is the DFA state we are setting transitions for
+    newstates = states
 
     #find the NFA states we can epsilon transition to, for each state in curr
     epsilons = []
     hold = []
+
     for x in curr.states:
         try:
             for z in nfa.Q[x].transitions['e']:
@@ -103,7 +105,6 @@ def settransition(id, states, nfa):
         except:
             pass
 
-    print epsilons
     # check if there are more epsilons
     therearemoreepsilons = True
 
@@ -129,8 +130,6 @@ def settransition(id, states, nfa):
     for y in curr.states:
         hold.append(int(y))
 
-    print hold
-
     #WE CHECK THE TRANSITIONS FOR ALL SYMBOLS
     trans = {}
     for symbol in nfa.E:
@@ -145,47 +144,41 @@ def settransition(id, states, nfa):
                 pass
     for symbol in nfa.E:
         if len(trans[symbol]) is 0:
-            trans[symbol].append(int(0))
+            trans[symbol].append('0')
 
 
     #make some DFA state objects
-    newstates = {}
 
+
+    newstates[curr.stateid] = curr
+    newid = 0
     for symbol in nfa.E:
+        flag = 0
+        counterpart = 0
+        dup = 0
         for x in trans[symbol]:
-            counterpart = 0
-            for y in states:
-                for z in states[y].states:
+            for y in newstates:
+                for z in newstates[y].states:
                     if int(x) is int(z):
                         counterpart = counterpart + 1
-            if len(trans[symbol]) is counterpart:
-                id = y.stateid
+
+                if len(trans[symbol]) is counterpart:
+                    dup = y
+            #check if that is a transition
+            if dup is not 0:
+                flag = 1
+                newid = dup
             else:
-                id = len(states) + 1
+                newid = len(newstates) + 1
 
-            tmp = DFAState(trans[symbol], id, nfa.F)
-            newstates[id] = tmp
+        if flag is 0:
+            tmp = DFAState(trans[symbol], newid, nfa.F)
+            newstates[newid] = tmp
 
-            curr.settransition(symbol, id)
+        curr.settransition(symbol, newid)
 
-    for x in newstates:
-        print x, newstates[x].states
+
     return newstates
-
-
-def main(filename):
-    nfa = NFA(readfile(filename))
-
-    generatedstates = {}
-    currentstate = DFAState(nfa.currentState, 1, nfa.F)
-    generatedstates[1] = currentstate
-
-    states = settransition(1, generatedstates, nfa)
-    # Here, I could run a check that all states in generatedstates have transition
-
-
-    notransition = checkalltransitions(states, nfa)
-
 
 def checkalltransitions(statelist, nfa):
     for x in statelist:
@@ -196,6 +189,26 @@ def checkalltransitions(statelist, nfa):
                 return x
 
     return -1
+
+def main(filename):
+    nfa = NFA(readfile(filename))
+
+    generatedstates = {}
+    currentstate = DFAState(nfa.currentState, 1, nfa.F)
+    generatedstates[1] = currentstate
+
+
+    states = settransition(1, generatedstates, nfa)
+
+    # Here, I could run a check that all states in generatedstates have transition
+
+    notransition = checkalltransitions(states, nfa)
+    while notransition is not -1:
+        states = settransition(notransition, generatedstates, nfa)
+        notransition = checkalltransitions(states, nfa)
+
+    for x in states:
+        print states[x].__dict__
 
 if __name__ == "__main__":
     main(sys.argv[1])
