@@ -1,6 +1,5 @@
 import sys
 
-
 class NFA:
     def __init__(self, NFAlist):
         self.Q = {}
