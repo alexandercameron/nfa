@@ -146,14 +146,26 @@ def settransition(id, states, nfa):
         if len(trans[symbol]) is 0:
             trans[symbol].append('0')
 
+#THIS IS WHERE I COPY THE TRANSITIONS, BUT GET RID OF DUPLICATES
+
+    tran = {}
+    for symbol in nfa.E:
+        tran[symbol] = []
+
+    for symbol in nfa.E:
+        for x in trans[symbol]:
+            if x not in tran[symbol]:
+                tran[symbol].append(x)
+
+    for symbol in nfa.E:
+        trans[symbol] = tran[symbol]
+
+
 
     #make some DFA state objects
-
-
-    newstates[curr.stateid] = curr
     newid = 0
     '''
-    this is where we check for duplicates
+    this is where we check for duplicate states
     
     trans is a dictionary that holds a list of states keyed to a symbol
     for each symbol, we need to check if the list in trans keyed to that symbol is the same as a saved state
@@ -172,10 +184,11 @@ def settransition(id, states, nfa):
         for s in newstates:
             counterpart = 0
             #we have to check if trans[symbol] == newstates[s].states
-            for onestate in trans[symbol]:
-                for correspondingstate in newstates[s].states:
-                    if int(onestate) is int(correspondingstate):
-                        counterpart = counterpart + 1
+            if len(trans[symbol]) is len(newstates[s].states):
+                for onestate in trans[symbol]:
+                    for correspondingstate in newstates[s].states:
+                        if int(onestate) is int(correspondingstate):
+                            counterpart = counterpart + 1
 
             if counterpart is len(trans[symbol]):
                 newid = s
