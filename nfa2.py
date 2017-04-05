@@ -89,7 +89,6 @@ def readfile(filename):
 
 
 def settransition(id, states, nfa):
-
     curr = states[id] #curr is the DFA state we are setting transitions for
     newstates = states
 
@@ -173,15 +172,15 @@ def settransition(id, states, nfa):
         for s in newstates:
             counterpart = 0
             #we have to check if trans[symbol] == newstates[s].states
-            if len(trans[symbol]) is len(newstates[s].states):
-                for onestate in trans[symbol]:
-                    for correspondingstate in newstates[s].states:
-                        if int(onestate) is int(correspondingstate):
-                            counterpart = counterpart + 1
+            for onestate in trans[symbol]:
+                for correspondingstate in newstates[s].states:
+                    if int(onestate) is int(correspondingstate):
+                        counterpart = counterpart + 1
 
-                if counterpart is len(trans[symbol]):
-                    newid = s
-                    dup = 1
+            if counterpart is len(trans[symbol]):
+                newid = s
+                dup = 1
+
         if dup is 0:
             newid = len(newstates) + 1
             tmp = DFAState(trans[symbol], newid, nfa.F)
@@ -201,22 +200,7 @@ def checkalltransitions(statelist, nfa):
 
     return -1
 
-def main(filename, outname):
-    nfa = NFA(readfile(filename))
-
-    generatedstates = {}
-    currentstate = DFAState(nfa.currentState, 1, nfa.F)
-    generatedstates[1] = currentstate
-
-
-    states = settransition(1, generatedstates, nfa)
-
-    # Here, I could run a check that all states in generatedstates have transition
-
-    notransition = checkalltransitions(states, nfa)
-    while notransition is not -1:
-        states = settransition(notransition, states, nfa)
-        notransition = checkalltransitions(states, nfa)
+def write(outname, states, nfa):
 
     f = open(outname, "a")
     f.write(str(len(states)))
@@ -240,6 +224,31 @@ def main(filename, outname):
             f.write(" ")
     f.write("\n")
     f.close()
+
+def main(filename, outname):
+
+    nfa = NFA(readfile(filename))
+
+    states = {}
+    currentstate = DFAState(nfa.currentState, 1, nfa.F)
+    states[1] = currentstate
+
+
+    states = settransition(1, states, nfa)
+
+    # Here, I could run a check that all states in generatedstates have transition
+
+    notransition = checkalltransitions(states, nfa)
+    while notransition is not -1:
+
+        states = settransition(notransition, states, nfa)
+        notransition = checkalltransitions(states, nfa)
+
+    for x in states:
+        print states[x].__dict__
+
+    write(outname, states, nfa)
+
 
 if __name__ == "__main__":
     main(sys.argv[1], sys.argv[2])
