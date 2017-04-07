@@ -1,9 +1,13 @@
 '''
+All tabs have been converted to spaces. 
+'''
+
+'''
 A program that reads in an NFA txt file, converts it 
 into its equivalent DFA, and writes the DFA to file. 
 
-Authors: Alex Cameron, Elijah Grady, Erick Perez
-USD, COMP370, Dr. Glick
+Authors: Alex Cameron, Eli Grady, Erick Perez
+USD, COMP370, Dr. Glick, Spring 2017
 '''
 
 
@@ -46,7 +50,7 @@ A class that represents a State in our NFA.
 
 class State:
     def __init__(self, state, transitions, accepts):
-        self.state = []
+       self.state = []
         for x in state:
             self.state.append(int(x))
         self.accepts = False
